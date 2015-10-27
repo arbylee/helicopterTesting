@@ -30,6 +30,12 @@ Player.prototype.update = function(){
 function Main() {};
 
 Main.prototype = {
+  init: function(params){
+    this.topScore = 0;
+    if(params && params.topScore){
+      this.topScore = params.topScore;
+    }
+  },
   preload: function(){
     this.game.stage.backgroundColor = '#000';
     this.game.load.spritesheet('player', 'assets/flyingPersonSprite.png', 32, 60);
@@ -54,7 +60,8 @@ Main.prototype = {
     this.obstacles.enableBody = true;
     this.obstacles.createMultiple(20, 'obstacle');
     this.timer = this.game.time.events.loop(1200, this.addObstacle, this);
-    this.scoreText = this.game.add.text("20", GAME_HEIGHT-30, "Distance: 0", {font: "20px Arial", fill: "#FFF"});
+    this.scoreText = this.game.add.text(20, GAME_HEIGHT-30, "Distance: 0", {font: "20px Arial", fill: "#FFF"});
+    this.topScoreText = this.game.add.text(GAME_WIDTH-160, GAME_HEIGHT-30, "Best: " + this.topScore, {font: "20px Arial", fill: "#FFF"});
   },
   update: function(){
     this.score += 1
@@ -64,10 +71,9 @@ Main.prototype = {
     this.game.physics.arcade.overlap(this.player, this.obstacles, this.collide, null, this);
   },
   collide: function(){
-    this.game.state.start('gameOver');
+    this.game.state.start('gameOver', true, false, {previousScore: this.score, previousTopScore: this.topScore});
   },
   addObstacle: function(){
-    console.log('asdf')
     var obstacle = this.obstacles.getFirstDead();
     yCoord = this.game.rnd.between(0, 5) * 80;
 
@@ -82,6 +88,11 @@ function GameOver(){};
 
 GameOver.prototype = {
   init: function(params){
+    if(params.previousScore > params.previousTopScore){
+      this.topScore = params.previousScore;
+    } else {
+      this.topScore = params.previousTopScore;
+    }
   },
   preload: function(){
   },
@@ -90,7 +101,7 @@ GameOver.prototype = {
   },
   update: function(){
     if(this.game.input.activePointer.isDown){
-      this.game.state.start('main');
+      this.game.state.start('main', true, false, {topScore: this.topScore});
     }
   }
 }
