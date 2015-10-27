@@ -21,6 +21,9 @@ Player.prototype.update = function(){
 
   if(this.game.input.activePointer.isDown){
     this.body.velocity.y = -250;
+    this.frame = 0;
+  } else {
+    this.frame = 1;
   }
 }
 
@@ -29,12 +32,13 @@ function Main() {};
 Main.prototype = {
   preload: function(){
     this.game.stage.backgroundColor = '#000';
-    this.game.load.image('player', 'assets/baldFlyingPerson.png');
+    this.game.load.spritesheet('player', 'assets/flyingPersonSprite.png', 32, 60);
     this.game.load.image('ceiling', 'assets/greenBar.png');
     this.game.load.image('floor', 'assets/greenBar.png');
     this.game.load.image('obstacle', 'assets/greenVertical.png');
   },
   create: function(){
+    this.score = 0;
     this.game.input.maxPointers = 1;
 
     this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
@@ -49,11 +53,15 @@ Main.prototype = {
     this.obstacles = this.game.add.group();
     this.obstacles.enableBody = true;
     this.obstacles.createMultiple(20, 'obstacle');
-    this.timer = this.game.time.events.loop(1500, this.addObstacle, this);
+    this.timer = this.game.time.events.loop(1200, this.addObstacle, this);
+    this.scoreText = this.game.add.text("20", GAME_HEIGHT-30, "Distance: 0", {font: "20px Arial", fill: "#FFF"});
   },
   update: function(){
+    this.score += 1
+    this.scoreText.text = "Distance: " + this.score;
     this.game.physics.arcade.overlap(this.player, this.ceiling, this.collide, null, this);
     this.game.physics.arcade.overlap(this.player, this.floor, this.collide, null, this);
+    this.game.physics.arcade.overlap(this.player, this.obstacles, this.collide, null, this);
   },
   collide: function(){
     this.game.state.start('gameOver');
@@ -61,7 +69,7 @@ Main.prototype = {
   addObstacle: function(){
     console.log('asdf')
     var obstacle = this.obstacles.getFirstDead();
-    yCoord = this.game.rnd.between(0, 6) * 80;
+    yCoord = this.game.rnd.between(0, 5) * 80;
 
     obstacle.reset(GAME_WIDTH, yCoord);
     obstacle.body.velocity.x = -250;
