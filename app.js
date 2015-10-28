@@ -11,6 +11,7 @@ var Player = function (state) {
   this.anchor.setTo(0.5, 0.5);
   this.body.collideWorldBounds = true;
   this.moveSpeed = 250;
+  this.engineSound = this.gameState.engineSound;
 }
 
 Player.prototype = Object.create(Phaser.Sprite.prototype);
@@ -20,9 +21,17 @@ Player.prototype.update = function(){
   this.body.velocity.y = 330;
 
   if(this.game.input.activePointer.isDown){
+    if(!this.enginePlaying){
+      this.engineSound.play();
+      this.enginePlaying = true;
+    }
     this.body.velocity.y = -250;
     this.frame = 0;
   } else {
+    if(this.enginePlaying){
+      this.engineSound.stop();
+      this.enginePlaying = false;
+    }
     this.frame = 1;
   }
 }
@@ -42,8 +51,12 @@ Main.prototype = {
     this.game.load.image('ceiling', 'assets/greenBar.png');
     this.game.load.image('floor', 'assets/greenBar.png');
     this.game.load.image('obstacle', 'assets/greenVertical.png');
+    this.game.load.audio('engine', 'assets/engine.m4a');
   },
   create: function(){
+    this.engineSound = this.game.add.audio('engine');
+    this.engineSound.volume = 0.7;
+    this.engineSound.loop = true;
     this.ceilingStart = -40;
     this.openSpace = GAME_HEIGHT-40;
     this.boundaryMovement = 1;
@@ -51,9 +64,9 @@ Main.prototype = {
     this.game.input.maxPointers = 1;
 
     this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+    this.scale.pageAlignHorizontally = true;
 
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
-    this.player = new Player(this);
     this.ceiling = this.game.add.sprite(0,0,'ceiling');
     this.floor = this.game.add.sprite(0,GAME_HEIGHT-40,'floor');
     this.game.physics.arcade.enable(this.ceiling);
@@ -68,6 +81,8 @@ Main.prototype = {
     this.timer = this.game.time.events.loop(120, this.addBoundaryTiles, this);
     this.scoreText = this.game.add.text(20, GAME_HEIGHT-30, "Distance: 0", {font: "20px Arial", fill: "#FFF"});
     this.topScoreText = this.game.add.text(GAME_WIDTH-160, GAME_HEIGHT-30, "Best: " + this.topScore, {font: "20px Arial", fill: "#FFF"});
+
+    this.player = new Player(this);
   },
   update: function(){
     this.score += 1
