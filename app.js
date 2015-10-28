@@ -44,6 +44,9 @@ Main.prototype = {
     this.game.load.image('obstacle', 'assets/greenVertical.png');
   },
   create: function(){
+    this.ceilingStart = -40;
+    this.openSpace = GAME_HEIGHT-40;
+    this.boundaryMovement = 1;
     this.score = 0;
     this.game.input.maxPointers = 1;
 
@@ -55,11 +58,14 @@ Main.prototype = {
     this.floor = this.game.add.sprite(0,GAME_HEIGHT-40,'floor');
     this.game.physics.arcade.enable(this.ceiling);
     this.game.physics.arcade.enable(this.floor);
+    this.floor.body.velocity.x = -250;
+    this.ceiling.body.velocity.x = -250;
 
     this.obstacles = this.game.add.group();
     this.obstacles.enableBody = true;
-    this.obstacles.createMultiple(20, 'obstacle');
+    this.obstacles.createMultiple(100, 'obstacle');
     this.timer = this.game.time.events.loop(1200, this.addObstacle, this);
+    this.timer = this.game.time.events.loop(120, this.addBoundaryTiles, this);
     this.scoreText = this.game.add.text(20, GAME_HEIGHT-30, "Distance: 0", {font: "20px Arial", fill: "#FFF"});
     this.topScoreText = this.game.add.text(GAME_WIDTH-160, GAME_HEIGHT-30, "Best: " + this.topScore, {font: "20px Arial", fill: "#FFF"});
   },
@@ -72,6 +78,25 @@ Main.prototype = {
   },
   collide: function(){
     this.game.state.start('gameOver', true, false, {previousScore: this.score, previousTopScore: this.topScore});
+  },
+  addBoundaryTiles: function(){
+    var ceilingTile = this.obstacles.getFirstDead();
+    if(this.ceilingStart >= 20) {
+      this.boundaryMovement = -1;
+    } else if(this.ceilingStart <= 0){
+      this.boundaryMovement = 1;
+    }
+    this.ceilingStart = this.ceilingStart + this.boundaryMovement;
+
+    ceilingTile.reset(GAME_WIDTH, this.ceilingStart);
+    ceilingTile.body.velocity.x = -250;
+    ceilingTile.checkWorldBounds = true;
+    ceilingTile.outOfBoundsKill = true;
+    var floorTile = this.obstacles.getFirstDead();
+    floorTile.reset(GAME_WIDTH, ceilingTile.y + this.openSpace);
+    floorTile.body.velocity.x = -250;
+    floorTile.checkWorldBounds = true;
+    floorTile.outOfBoundsKill = true;
   },
   addObstacle: function(){
     var obstacle = this.obstacles.getFirstDead();
